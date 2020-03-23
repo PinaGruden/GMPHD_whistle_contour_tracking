@@ -17,7 +17,6 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 clear, close all
 
-
 %% ////////////// Specify PARAMETERS //////////////
 
 % ------------ Parameters for obtaining the measurements ------------------

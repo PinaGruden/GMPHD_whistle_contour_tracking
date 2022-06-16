@@ -33,7 +33,7 @@ nClutter=10; %number of clutter points per time step
 parameters.wth=0.009; %threshold used in state estimation
 parameters.pdet = 0.85; %probability of detection (used in Update calculation)
 parameters.psurv = 0.994;%probability of survival
-parameters.clutter = nClutter/(50000-2000); % Clutter intensity
+parameters.clutter = nClutter/(freqrange(2)-freqrange(1)); % Clutter intensity
 parameters.Jmax = 100; %max number of Gaussian componenets used in pruning
 parameters.U = 10; %pruning threshold used in Pruning & merging
 parameters.Tr = 0.001; %truncation threshold used in Pruning & merging 
@@ -56,7 +56,7 @@ tl=10; %specify minimal track length in time steps - this is how long a
 % ~~~~~~~~~~~~~~~~~~~~~~ Read audio data ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [x,fs]=audioread('TestFile.wav');
-
+x=x(:,1); %select first channel
 %Note: the following only handles one channel data. Adjust as necessary.
 
 %% ~~~~~~~~~~~  Initialize remaining PARAMETERS ~~~~~~~~~~~~~~~~
@@ -92,7 +92,9 @@ models.R= round((fs/win_width)^2/12) ;%measurement noise covariance matrix
 figure
 t=(0:(size(Zset,2)-1)).*dt;
 for m=1:size(Zset,2)
-plot(t(m),Zset{m},'k.'),hold on
+    if ~isempty(Zset{m})
+        plot(t(m),Zset{m},'k.'),hold on
+    end
 end
 for m=1:size(DT,2)
 plot(DT(m).time,DT(m).freq,'LineWidth',1.5),hold on

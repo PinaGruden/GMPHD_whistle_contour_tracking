@@ -18,17 +18,32 @@
 clear, close all
 
 %% ////////////// Specify PARAMETERS //////////////
+%NOTE: The filter was developed based on using window length (win_width_s) 
+% of 10.7 ms (which resulted in 93.75 Hz frequency bin resolution). 
+% The time increment (dt) between the windows was 5.35 ms (50 % overlap).
+% This is set as default.
+% If you decide to change this, then you will have to change variances of
+% the GM-PHD filter, specifically the model.Q (system noise covariance will 
+% have to be retrained.
 
 % ------------ Parameters for obtaining the measurements ------------------
-win_width=2048; %specify hanning window length (samples)
-overlap=0.5; %percent overlap 
-slide_incr= round((1-overlap)*win_width); %advancment of the window (samples)
+win_width_s = 0.0107; %window length in seconds (default)
 freqrange = [2000,50000]; % lower and higher frequency range limits in
 % Hz in which your signals occur 
 peak_thr =8; %threshold in dB for finding spectral peaks 
 %(these become your measurements that will go to the detector)
 
 % ---------  PARAMETERS for the GMPHD detector ----------------------
+%--------------Parameters for System and observation Models --------------
+% System model: xk =F*xk_1 + v; 
+% Measurement model: zk = H*xk + w;
+dt=0.00535; %time increment in s (default)
+models.F = [1, dt; 0, 1]; %state transition matrix
+models.Q =[5013,166770;166770, 53973000]; %system noise covariance matrix
+models.H = [1, 0]; % measurement matrix
+models.R= round((1/win_width_s)^2/12) ;%measurement noise covariance matrix
+
+%-------------Parameters for birth,clutter and other--------------------
 nClutter=10; %number of clutter points per time step
 parameters.wth=0.009; %threshold used in state estimation
 parameters.pdet = 0.85; %probability of detection (used in Update calculation)
@@ -57,22 +72,11 @@ tl=10; %specify minimal track length in time steps - this is how long a
 
 [x,fs]=audioread('TestFile.wav');
 x=x(:,1); %select first channel
-%Note: the following only handles one channel data. Adjust as necessary.
-
-%% ~~~~~~~~~~~  Initialize remaining PARAMETERS ~~~~~~~~~~~~~~~~
-%--------------Parameters for System and observation Models --------------
-% System model: xk =F*xk_1 + v; 
-% Measurement model: zk = H*xk + w;
-
-dt=slide_incr/fs;%time increment
-models.F = [1, dt; 0, 1]; %state transition matrix
-models.Q =[5013,166770;166770, 53973000]; %system noise covariance matrix
-models.H = [1, 0]; % measurement matrix
-models.R= round((fs/win_width)^2/12) ;%measurement noise covariance matrix 
+%Note: the following only handles one channel data. Adjust as necessary. 
   
        
 %% ~~~~~~~~~~~~~ Make MEASUREMENTS (Zsets) ~~~~~~~~~~~~~~~~~~~
-[Zset] = preprocess_getZset(win_width,overlap,fs,x,freqrange,peak_thr);
+[Zset] = preprocess_getZset(win_width_s,dt,fs,x,freqrange,peak_thr);
 %Zset is a cell array where each cell contains spectral peaks (frequencies)
 % from a particular time step that were above threshold (peak_thr - in dB).
 
@@ -89,6 +93,8 @@ models.R= round((fs/win_width)^2/12) ;%measurement noise covariance matrix
 %save([folder,'GMPHD_',file(1:end-4),'.mat'],'DT')
 
 %% ~~~~~~~~~~~~~~~~~~ PLOT Detections ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+%Plot detections against measurements
 figure
 t=(0:(size(Zset,2)-1)).*dt;
 for m=1:size(Zset,2)
@@ -99,4 +105,3 @@ end
 for m=1:size(DT,2)
 plot(DT(m).time,DT(m).freq,'LineWidth',1.5),hold on
 end
-

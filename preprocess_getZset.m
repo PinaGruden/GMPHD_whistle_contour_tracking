@@ -1,4 +1,4 @@
-function [Zset] = preprocess_getZset(win_width,overlap,fs,x,freqrange,peak_thr)
+function [Zset] = preprocess_getZset(win_width_s,dt,fs,x,freqrange,peak_thr)
 %function preprocess_getZset is a function that applies several
 %pre-processing steps to an audio file in order to obtain the spectral peak
 % peak measurements (Zset). Preprocessing steps include click removal, FFT,
@@ -6,9 +6,8 @@ function [Zset] = preprocess_getZset(win_width,overlap,fs,x,freqrange,peak_thr)
 %Gruden & White, 2016 for details)
 
 % Inputs:
-% win_width = window length in samples,
-% overlap = amount of overlap between consecutive windows (for 80% overlap,
-% specify overlap as 0.8)
+% win_width = window length in seconds,
+% dt = time increment between windows in seconds
 % fs = sampling frequency,
 % x = raw data,
 % freqrange = a 1 x 2 vector of lower and higher frequency range limits in
@@ -25,8 +24,11 @@ function [Zset] = preprocess_getZset(win_width,overlap,fs,x,freqrange,peak_thr)
 %Pina Gruden, 2016, Institute of Sound and Vibration Research (ISVR),
 %University of Southampton
 
-slide_incr= round((1-overlap)*win_width);
+
+win_width = round(win_width_s*fs); %window length in samples
 w=hanning(win_width);
+slide_incr= round(dt*fs); %time increment between windows in samples
+
 
 tresh=5; %threshold for click removal
 p=6; %power for click removal
@@ -75,6 +77,7 @@ end
 %----------------- Find spectral peaks -----------------------
 for n=1:size(Ynorm,2)
     Ynormn=Ynorm(range,n);
+    warning('off', 'signal:findpeaks:largeMinPeakHeight') % to turn off warning of no peaks greater than MinPeakHeight
     [~,locs]=findpeaks(Ynormn,'MinPeakHeight',peak_thr);
     frq=zeros(size(locs'));
     for ind=1:length(locs)

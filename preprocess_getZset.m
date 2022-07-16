@@ -65,7 +65,7 @@ for i=1:numstps %do sliding window
     Ymag = 20*log10(abs(Y)); % Magnitude squared on a dB scale
     Ymedfilt = Ymag - medfilt1(Ymag,61); % Normalization across frequency
     Ytnorm = (1-lambda)*Ytnorm+lambda*Ymedfilt;%Normalize across time with exponential moving average
-    Ynorm(:,i) = Ymedfilt - Ytnorm;
+    Ynorm(:,i) = Ymedfilt - abs(Ytnorm);
     start=start+slide_incr;
 end
 
